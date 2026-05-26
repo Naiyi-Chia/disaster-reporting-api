@@ -1,3 +1,94 @@
+## 2026-05-26 Phase 2B Legacy Endpoint Adapter Migration Summary
+
+### Status
+Phase 2B completed and verified.
+
+### Goal
+Migrate legacy endpoints to use the centralized `extraction_service` through adapter mappings while preserving each endpoint's existing request and response shape.
+
+### Endpoints Updated
+- `POST /report/ingest`
+- `POST /chat/report`
+- `POST /line/webhook`
+
+Main workflow endpoint `/webhook/report` was not changed.
+
+### Files Changed
+- `services/extraction_service.py`
+- `services/line_service.py`
+- `services/report_service.py`
+- `tests/test_extraction_service.py`
+
+### Parser Logic Replaced
+- Removed duplicated natural-language extraction from `line_service.extract_report_info()`.
+- Removed duplicated annotation parsing from `report_service._extract_annotations()`.
+- Legacy endpoints now use `extraction_service` via adapters.
+
+### Adapters Added
+- `adapt_to_legacy_report_info(raw_text)`
+- `adapt_to_legacy_annotations(raw_text)`
+
+### Test Result
+- Command: `python -m pytest`
+- Result: `30 passed, 156 warnings`
+
+### Remaining Risks
+- Extraction is still keyword / heuristic based.
+- Test runs mutate local SQLite DB and bytecode caches.
+- `.pytest_cache` permission warning remains.
+- Real LINE integration has not started yet.
+- DB schema was not changed.
+
+### Recommended Next Step
+Create a clean Git checkpoint, then proceed to Phase 2C: session correction / cancel / timeout behavior.
+
+## 2026-05-26 Phase 2A Manual Validation
+
+- Official complete report passed
+- Citizen incomplete report returned need_more_info
+- Citizen follow-up reused same session and reached WAITING_CONFIRMATION
+- Citizen confirm created final_report
+- GET /reports returned confirmed citizen report id=80
+- Current status: Phase 2A parser centralization validated
+
+## 2026-05-26 Phase 2A Parser Centralization Summary
+
+### Files Changed
+- `services/extraction_service.py`
+- `services/session_service.py`
+- `tests/test_extraction_service.py`
+
+### Logic Moved
+- Moved rule-based natural-language extraction logic from `session_service` into `services/extraction_service.py`.
+- Added centralized extraction contract:
+  - `location.address`
+  - `incident.type`
+  - `incident.description`
+  - `incident.severity`
+  - `needs[]`
+  - `reporter.name`
+  - `reporter.phone`
+  - `confidence_score`
+  - `warnings`
+- `/webhook/report` now uses the centralized parser while preserving session workflow behavior.
+
+### Tests
+- Added `tests/test_extraction_service.py`.
+- Covered extraction contract and follow-up merge behavior.
+
+### Test Result
+- `python -m pytest`
+- Result: `28 passed, 156 warnings`
+
+### Known Risks
+- `/line/webhook`, `/chat/report`, and `/report/ingest` still use older parser paths.
+- `confidence_score` is currently heuristic.
+- Legacy endpoints still need adapter-based migration.
+- Git is not installed yet, so no git diff/checkpoint was created.
+
+### Recommended Next Step
+- Phase 2B: migrate legacy endpoints to use `extraction_service` via adapters while preserving their current response shapes.
+
 ## 2026-05-26 E2E Workflow Test Checkpoint
 
 ### Test Result
