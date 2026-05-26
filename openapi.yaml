@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: 【通報積木】跨社群災情轉譯 API 服務
+  description: 數位發展部「防災積木元件創新賽」參賽作品 - 核心通報積木 API 規格文件。本服務負責將社群軟體（如 LINE）中非結構化的災情多媒體訊息轉譯為標準化災情資料。
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: 本地開發與測試環境
+paths:
+  /reports:
+    post:
+      summary: 接收並儲存標準化災情通報資料
+      description: 由外部管道適配器（如 LINE Webhook Adapter）在使用者確認資料正確後呼叫，將多模態 AI 轉譯並經人類確認的結構化災情資料寫入系統。
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisasterReport'
+      responses:
+        '201':
+          description: 災情資料接收與拋轉成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Disaster report successfully processed and exported."
+                  report_id:
+                    type: string
+                    example: "REQ-20250915-002"
+        '400':
+          description: 欄位驗證失敗或 JSON 格式錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認證失敗，缺少或無效的 API Token
+        '500':
+          description: 伺服器內部錯誤
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    DisasterReport:
+      type: object
+      required:
+        - report_id
+        - source_type
+        - status
+        - emergency_level
+        - timestamp
+        - location
+        - needs
+      properties:
+        report_id:
+          type: string
+          description: 系統內唯一的災情案件 ID
+          example: "REQ-20250915-002"
+        source_type:
+          type: string
+          description: 通報來源類型 (official：公務人員群組指令, citizen：一般災民官方帳號)
+          enum:
+            - official
+            - citizen
+          example: "official"
+        status:
+          type: string
+          description: 案件驗證狀態 (verified_by_user：經通報者確認)
+          enum:
+            - verified_by_user
+            - pending
+            - corrected
+          example: "verified_by_user"
+        emergency_level:
+          type: string
+          description: 災情緊急程度
+          enum:
+            - 普通
+            - 高度
+            - 緊急
+          example: "緊急"
+        timestamp:
+          type: string
+          format: date-time
+          description: 案件建立或確認的時間戳記 (ISO 8601 格式)
+          example: "2025-09-15T16:05:00Z"
+        contact:
+          type: object
+          description: 通報者聯絡資訊
+          properties:
+            name:
+              type: string
+              example: "林隊長"
+            phone:
+              type: string
+              example: "09xx-xxx-xxx"
+        location:
+          type: object
+          description: 災情地理位置資訊
+          required:
+            - gps_provided
+            - address
+          properties:
+            gps_provided:
+              type: boolean
+              description: 是否提供 GPS 定位數據
+              example: true
+            latitude:
+              type: number
+              format: float
+              example: 23.7123
+            longitude:
+              type: number
+              format: float
+              example: 121.3456
+            address:
+              type: string
+              description: 經 AI 辨識或人工補全的詳細地址資訊
+              example: "花蓮縣馬太鞍溪橋"
+        needs:
+          type: object
+          description: 現場災情狀況與資源需求
+          required:
+            - disaster_type
+          properties:
+            disaster_type:
+              type: string
+              description: 災情主要類別 (例如：橋樑斷裂、土石流、房屋倒塌)
+              example: "橋樑斷裂"
+            supplies:
+              type: array
+              description: 請求支援的具體物資清單
+              items:
+                type: object
+                properties:
+                  item:
+                    type: string
+                    example: "怪手"
+                  quantity:
+                    type: integer
+                    example: 2
+            manpower:
+              type: integer
+              description: 請求支援的人力數量 (0 表示暫時不需額外人力)
+              example: 0
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "The field 'location.address' is required."

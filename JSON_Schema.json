@@ -1,0 +1,159 @@
+{\rtf1\ansi\ansicpg950\cocoartf2870
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 ArialMT;\f1\froman\fcharset0 Times-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww19080\viewh14320\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs29\fsmilli14667 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0"$schema": "http://json-schema.org/draft-07/schema#",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0"title": "StandardReportOutput",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0"description": "\uc0\u12304 \u36890 \u22577 \u31309 \u26408 \u12305 \u36328 \u31038 \u32676 \u28797 \u24773 \u36681 \u35695  API \u26381 \u21209  - \u27161 \u28310 \u21270 \u28797 \u24773 \u36039 \u26009 \u20132 \u25563 \u35215 \u26684 ",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0"type": "object",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0"properties": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"source_type": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"enum": ["official", "citizen"],
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "\uc0\u31995 \u32113 \u26681 \u25818 \u20358 \u28304 \u33258 \u21205 \u27161 \u35352 \u12290 \u23448 \u26041 \u20844 \u21209 \u32676 \u32068 \u28858  official\u65292 \u19968 \u33324 \u27665 \u30526 \u28858  citizen\u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"report_id": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "\uc0\u31995 \u32113 \u33258 \u21205 \u29983 \u25104 \u30340 \u36890 \u22577 \u36861 \u36452 \u32232 \u34399 \u65292 \u20363 \u22914 \u65306 RPT-20250526-0001\u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"reporter": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "\uc0\u36890 \u22577 \u32773 \u31281 \u21628 \u65288 \u28040 \u38450 \u21729 \u30002 \u65289 \u25110 \u28797 \u27665 \u32879 \u32097 \u36039 \u35338 \u65288 \u29579 \u23567 \u26126  / 0912-XXX-XXX\u65289 \u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"location": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "AI \uc0\u33795 \u21462 \u25110 \u27665 \u30526 \u35036 \u20805 \u20043 \u28797 \u24773 \u22320 \u40670 \u12289 \u22320 \u22336 \u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"incident": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "\uc0\u28797 \u24773 \u20107 \u20214 \u31777 \u36848 \u65292 \u20363 \u22914 \u65306 \u27211 \u27153 \u26039 \u35010 \u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"need": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "\uc0\u20855 \u39636 \u30340 \u29289 \u36039 \u25110 \u20154 \u21147 \u38656 \u27714 \u65292 \u20363 \u22914 \u65306 \u24618 \u25163  2 \u21488 \u12289 \u32570 \u27700 \u65288 \u32004  5 \u31665 \u65289 \u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"timestamp": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"format": "date-time",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "\uc0\u36890 \u22577 \u32773 \u40670 \u25802 \u12300 \u27491 \u30906 \u12301 \u23436 \u25104 \u30906 \u35469 \u30340 \u26178 \u38291 \u25139 \u35352 \u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"group_id": \{
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"type": "string",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\'a0\'a0"description": "\uc0\u33509 \u28858 \u20844 \u21209 \u32676 \u32068 \u36890 \u22577 \u65288 \u36335 \u32218  A\u65289 \u65292 \u31995 \u32113 \u26371 \u33258 \u21205 \u24118 \u20837 \u27492 \u32676 \u32068 \u20358 \u28304 \u36776 \u35672 \u30908 \u12290 "
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0\}
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\},
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0"required": [
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"source_type",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"report_id",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"reporter",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"location",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"need",
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0\'a0\'a0"timestamp"
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \'a0\'a0]
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 \}
+\f1\fs24 \
+}
