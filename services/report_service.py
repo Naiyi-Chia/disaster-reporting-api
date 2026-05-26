@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import List
 
 from models.report import IncomingMessage, RoutedReport
+from services.extraction_service import adapt_to_legacy_annotations
 
 
 ROUTE_MAP = {
@@ -13,27 +13,7 @@ ROUTE_MAP = {
 
 
 def _extract_annotations(raw_text: str) -> dict:
-    normalized = raw_text
-    detected_location = "馬太鞍溪橋" if "馬太鞍溪橋" in normalized else None
-
-    detected_hazards: List[str] = []
-    if "橋斷裂" in normalized or "斷裂" in normalized:
-        detected_hazards.append("bridge_collapse")
-    if "缺水" in normalized:
-        detected_hazards.append("water_shortage")
-
-    detected_assets: List[str] = []
-    if "怪手" in normalized:
-        detected_assets.append("excavator")
-
-    critical_risk = any(keyword in normalized for keyword in ["受困", "被困", "火災"])
-
-    return {
-        "detected_location": detected_location,
-        "detected_hazards": detected_hazards,
-        "detected_assets": detected_assets,
-        "critical_risk": critical_risk,
-    }
+    return adapt_to_legacy_annotations(raw_text)
 
 
 def ingest_report(message: IncomingMessage) -> RoutedReport:

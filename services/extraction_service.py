@@ -109,3 +109,70 @@ def merge_extraction_results(existing: dict[str, Any], new: dict[str, Any]) -> d
     merged["confidence_score"] = _compute_confidence(merged)
 
     return merged
+
+
+def _legacy_incident_type(entities: dict[str, Any], raw_text: str) -> str | None:
+    incident_type = entities.get("incident", {}).get("type")
+    if incident_type == "bridge_damage" or (
+        "馬太鞍溪橋" in raw_text and any(keyword in raw_text for keyword in ["斷裂", "斷了"])
+    ):
+        return "bridge_collapse"
+    if incident_type in {"flood", "fire"}:
+        return incident_type
+    if "蝻箸偌" in raw_text:
+        return "water_shortage"
+    return None
+
+
+def _legacy_resource_type(entities: dict[str, Any]) -> str | None:
+    needs = entities.get("needs", [])
+    if not needs:
+        return None
+
+    category = needs[0].get("category")
+    if category == "vehicle":
+        return "excavator"
+    if category == "supplies":
+        return "water"
+    return None
+
+
+def adapt_to_legacy_report_info(raw_text: str) -> dict[str, Any]:
+    """Map central extraction entities to the legacy flat report contract."""
+    entities = extract_report_entities(raw_text)
+    needs = entities.get("needs", [])
+    primary_need = needs[0] if needs else {}
+    incident = entities.get("incident", {})
+
+    return {
+        "incident_type": _legacy_incident_type(entities, raw_text),
+        "resource_type": _legacy_resource_type(entities),
+        "quantity": primary_need.get("quantity"),
+        "risk_level": incident.get("severity"),
+        "location": entities.get("location", {}).get("address"),
+    }
+
+
+def adapt_to_legacy_annotations(raw_text: str) -> dict[str, Any]:
+    """Map central extraction entities to the old ingest annotation contract."""
+    entities = extract_report_entities(raw_text)
+    incident_type = _legacy_incident_type(entities, raw_text)
+    resource_type = _legacy_resource_type(entities)
+
+    detected_hazards = []
+    if incident_type:
+        detected_hazards.append(incident_type)
+
+    detected_assets = []
+    if resource_type == "excavator":
+        detected_assets.append(resource_type)
+
+    incident = entities.get("incident", {})
+    critical_risk = incident.get("severity") == "critical" or incident.get("type") == "fire"
+
+    return {
+        "detected_location": entities.get("location", {}).get("address"),
+        "detected_hazards": detected_hazards,
+        "detected_assets": detected_assets,
+        "critical_risk": critical_risk,
+    }
