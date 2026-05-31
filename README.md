@@ -1,286 +1,211 @@
-# LINE Disaster Report API - MVP
+# Disaster Report Workflow API
 
-A production-ready FastAPI backend for receiving and managing disaster reports via LINE group messages and web APIs.
+FastAPI MVP service component for receiving disaster reports, extracting structured fields, keeping a short multi-message session, and exporting a confirmed report record.
 
-## Features
+This repository is packaged for competition submission as a backend service component. It does not include a production LINE bot integration yet; the current official entry point is the HTTP webhook-compatible endpoint `POST /webhook/report`.
 
-- LINE webhook integration for receiving disaster reports from group messages
-- Automatic disaster report detection and classification
-- SQLite database for storing reports
-- RESTful APIs for querying and managing reports
-- Structured information extraction from unstructured text
-- Report state management (pending → confirmed/cancelled)
+## Project Overview
 
-## Project Structure
+The service accepts report messages from LINE-like clients, classifies the sender route as official or citizen, extracts disaster entities with deterministic rules, asks for missing fields when needed, and creates a final report after explicit user confirmation.
 
+Core capabilities:
+
+- Session-based report intake through `POST /webhook/report`
+- Official route and citizen route handling
+- Missing-field detection and follow-up prompts
+- Explicit confirm, correct, and cancel session actions
+- SQLite-backed report persistence
+- Swagger UI and OpenAPI documentation from FastAPI
+- Test coverage for session, extraction, report, and end-to-end workflows
+
+## Problem Statement
+
+During disasters, reports often arrive as short, incomplete, or conversational messages. Response teams need a structured record that includes location, incident type, resource needs, reporter identity when required, and a confirmed final state.
+
+This MVP focuses on the service layer that turns free-text reports into structured, confirmable records while preserving a human confirmation step before export.
+
+## Component Positioning
+
+This project is the backend service component in a larger disaster-reporting workflow.
+
+- Upstream: LINE bot adapter, web client, or test client sends message payloads.
+- This service: normalizes messages, extracts fields, manages session state, and persists reports.
+- Downstream: command center dashboard, dispatch system, analytics database, or report export pipeline.
+
+LINE production integration is intentionally not started in this packaging pass.
+
+## Quick Start
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv .venv
 ```
-app/
-  main.py                 # FastAPI app initialization
-  database.py             # SQLAlchemy setup
-routers/
-  health.py               # Health check endpoint
-  line.py                 # LINE webhook router
-  report.py               # Web-based report ingest router
-  reports.py              # Report management APIs
-services/
-  line_service.py         # LINE message parsing and extraction
-  report_service.py       # Report CRUD operations
-  reports_service.py      # Report database service
-models/
-  report.py               # Report ORM and Pydantic schemas
-  line.py                 # LINE webhook schemas
-tests/
-  test_report.py          # Comprehensive test suite
-requirements.txt
-README.md
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-## Installation
+macOS/Linux:
 
-1. Create a virtual environment:
+```bash
+source .venv/bin/activate
+```
 
-   ```bash
-   python -m venv .venv
-   ```
+Install dependencies:
 
-2. Activate the environment:
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
-   **Windows PowerShell:**
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
-   ```
-
-   **Windows CMD:**
-   ```cmd
-   .\.venv\Scripts\activate.bat
-   ```
-
-   **macOS/Linux:**
-   ```bash
-   source .venv/bin/activate
-   ```
-
-3. Install dependencies:
-
-   ```bash
-   python -m pip install --upgrade pip
-   python -m pip install -r requirements.txt
-   ```
-
-## Running the Server
-
-Start the development server:
+Run the API:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`
+Open:
 
-**Swagger UI:** http://localhost:8000/docs
-**ReDoc:** http://localhost:8000/redoc
+- API base URL: `http://127.0.0.1:8000`
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
 
-## API Endpoints
+## Python Version and Dependencies
 
-### Health Check
-```
-GET /health
-```
+The current local packaging was verified with Python `3.14.3`. The service uses standard FastAPI, SQLAlchemy, Pydantic, Uvicorn, HTTPX, and Pytest dependencies listed in `requirements.txt`.
 
-### LINE Webhook
-```
-POST /line/webhook
-```
-Receives LINE webhook events and creates reports for messages containing disaster keywords.
+Install only from `requirements.txt`; do not package local virtual environments, caches, or SQLite database files.
 
-### Web Report Ingest
-```
-POST /report/ingest
-```
-Directly ingest a report via web API.
+Excluded local artifacts:
 
-### Natural Language Chat Report Ingest
-```
-POST /chat/report
-```
-Ingest an unstructured natural language report using text-only payloads.
+- `venv/`
+- `.venv/`
+- `__pycache__/`
+- `.pytest_cache/`
+- `*.db`
 
-### Reports Management
-```
-GET /reports                    # List all reports
-GET /reports/{report_id}         # Get specific report
-POST /reports/{report_id}/confirm # Mark as confirmed
-POST /reports/{report_id}/cancel  # Mark as cancelled
-```
+## API Endpoint Summary
 
-## Report Detection
+Main workflow endpoint:
 
-The system automatically creates reports when a message contains any of these keywords:
-- `@通報`
-- `通報`
-- `救命`
-- `受困`
-- `缺水`
-- `火災`
-- `淹水`
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/webhook/report` | Create or update a disaster-report session from a LINE-like text message. |
 
-## Information Extraction
+Session endpoints:
 
-The system extracts the following information from messages:
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/sessions/{session_id}` | Read current session state and extracted entities. |
+| `POST` | `/sessions/{session_id}/confirm` | Confirm a completed session and create the final report. |
+| `POST` | `/sessions/{session_id}/correct` | Add corrected text to the same session. |
+| `POST` | `/sessions/{session_id}/cancel` | Cancel an open session. |
 
-| Pattern | Field | Value |
-|---------|-------|-------|
-| `馬太鞍溪橋` | location | 馬太鞍溪橋|
-| `橋斷裂` / `斷裂` | incident_type | bridge_collapse |
-| `缺水` | incident_type | water_shortage |
-| `淹水` | incident_type | flood |
-| `火災` | incident_type | fire |
-| `怪手` | resource_type | excavator |
-| `受困` / `救命` | risk_level | critical |
-| `\d+台` | quantity | [number] |
+Report endpoints:
 
-## Example Usage
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/reports` | List persisted reports. |
+| `GET` | `/reports/{report_id}` | Read one persisted report. |
+| `POST` | `/reports/{report_id}/confirm` | Mark a persisted report as confirmed. |
+| `POST` | `/reports/{report_id}/cancel` | Mark a persisted report as cancelled. |
 
-### LINE Webhook Example
+Supporting and legacy endpoints:
 
-```bash
-curl -X POST "http://localhost:8000/line/webhook" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "events": [
-      {
-        "type": "message",
-        "source": {
-          "type": "group",
-          "groupId": "mock-group-id",
-          "userId": "mock-user-id"
-        },
-        "message": {
-          "type": "text",
-          "text": "@通報 馬太鞍溪橋斷裂，需要 2 台怪手"
-        }
-      }
-    ]
-  }'
-```
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Health check. |
+| `POST` | `/line/webhook` | Legacy LINE-style webhook report creation. |
+| `POST` | `/report/ingest` | Legacy direct report ingest. |
+| `POST` | `/chat/report` | Legacy text-only chat ingest. |
 
-Response:
-```json
-{
-  "processed": true,
-  "created_reports": [
-    {
-      "id": 1,
-      "incident_type": "bridge_collapse",
-      "location": "馬太鞍溪橋",
-      "state": "pending_confirmation"
-    }
-  ]
-}
-```
+## Input / Process / Output
 
-### Chat Report Example
-```bash
-curl -X POST "http://localhost:8000/chat/report" \
-  -H "Content-Type: application/json" \
-  -d '{"text":"@通報 馬太鞍溪橋斷了，需要兩台怪手"}'
-```
+Input:
 
-Response:
-```json
-{
-  "id": 1,
-  "raw_text": "@通報 馬太鞍溪橋斷了，需要兩台怪手",
-  "location": "馬太鞍溪橋",
-  "hazard_type": "bridge_collapse",
-  "requested_resource": "excavator",
-  "quantity": 2,
-  "critical_risk": true,
-  "confidence_score": 0.8,
-  "missing_fields": [],
-  "validation_warnings": [],
-  "state": "pending_confirmation"
-}
-```
+- `platform`: source platform label, for example `LINE`
+- `sender_id`: user identifier
+- `group_id`: group identifier for official/group reports, or `null` for citizen direct reports
+- `message_type`: currently only `text` is supported
+- `content`: raw report text
+- `timestamp`: ISO 8601 timestamp
 
-### List Reports
+Process:
+
+1. The webhook router validates the request and rejects non-text messages.
+2. The session service finds an open session for the same sender, platform, and group context, or creates a new session.
+3. The extraction service applies deterministic keyword and regex rules.
+4. Missing required fields are calculated from route-specific requirements.
+5. The response either asks for more information or requests confirmation.
+6. Confirmation creates a persisted report in the `reports` table.
+
+Output:
+
+- Incomplete reports return `status: "need_more_info"` and a `missing_fields` list.
+- Complete reports return `status: "waiting_confirmation"` and confirmation actions.
+- Confirmed sessions return `status: "confirmed"` and a `final_report` object.
+
+## Swagger / OpenAPI Usage
+
+FastAPI serves live API documentation at:
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- OpenAPI JSON: `http://127.0.0.1:8000/openapi.json`
+- ReDoc: `http://127.0.0.1:8000/redoc`
+
+The repository also contains `openapi.yaml` for submission/reference packaging. If API routes change later, regenerate a fresh spec from the running FastAPI app, then convert JSON to YAML if needed:
 
 ```bash
-curl -X GET "http://localhost:8000/reports"
+uvicorn app.main:app --reload
 ```
 
-Response:
-```json
-[
-  {
-    "id": 1,
-    "source_channel": "line",
-    "line_group_id": "mock-group-id",
-    "line_user_id": "mock-user-id",
-    "original_message": "@通報 馬太鞍溪橋斷裂，需要 2 台怪手",
-    "route": "B_citizen",
-    "location": "馬太鞍溪橋",
-    "incident_type": "bridge_collapse",
-    "resource_type": "excavator",
-    "quantity": 2,
-    "risk_level": null,
-    "state": "pending_confirmation",
-    "created_at": "2026-05-24T14:30:00",
-    "updated_at": "2026-05-24T14:30:00"
-  }
-]
+Then download:
+
+```text
+http://127.0.0.1:8000/openapi.json
 ```
 
-### Get Specific Report
+## How to Run Tests
+
+Run the full test suite:
 
 ```bash
-curl -X GET "http://localhost:8000/reports/1"
+python -m pytest
 ```
 
-### Confirm Report
+Run a specific test file:
 
 ```bash
-curl -X POST "http://localhost:8000/reports/1/confirm"
+python -m pytest tests/test_workflow_e2e.py
 ```
 
-### Cancel Report
+## Known Limitations
 
-```bash
-curl -X POST "http://localhost:8000/reports/1/cancel"
-```
+- The extraction architecture is rule-based, not an LLM or trained NLP model.
+- Current parser examples include encoded demo strings from the MVP test data.
+- Only text messages are supported by `POST /webhook/report`.
+- Authentication, authorization, rate limiting, and LINE signature verification are not production-ready.
+- SQLite is used for MVP storage.
+- The checked-in `openapi.yaml` is a static submission artifact; the live FastAPI spec at `/openapi.json` is the source to regenerate from.
+- Human confirmation is required before final report export.
 
-## Running Tests
+## Roadmap
 
-```bash
-python -m pytest tests/ -v
-```
+- Add production LINE webhook adapter and signature verification.
+- Replace or augment rule extraction with an LLM/AI-agent extraction layer.
+- Add confidence thresholds, audit trails, and reviewer assignment.
+- Add dashboard or dispatch-system integration.
+- Add authentication and role-based access control.
+- Add production database migrations and deployment configuration.
+- Regenerate and align `openapi.yaml` automatically in CI.
 
-## Database
+## Additional Documentation
 
-The application uses SQLite with SQLAlchemy ORM. The database file is created automatically as `disaster_reports.db` in the project root.
-
-### Report Table Schema
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | Integer | Primary key |
-| source_channel | String | Where the report came from (line, web) |
-| line_group_id | String | LINE group ID if from LINE |
-| line_user_id | String | LINE user ID if from LINE |
-| original_message | Text | Full original message |
-| route | String | A_official or B_citizen |
-| location | String | Detected location |
-| incident_type | String | Type of disaster (bridge_collapse, fire, flood, etc.) |
-| resource_type | String | Type of resource needed (excavator, etc.) |
-| quantity | Integer | Quantity of resources |
-| risk_level | String | Risk assessment (critical, high, etc.) |
-| state | String | Current state (pending_confirmation, confirmed, cancelled) |
-| created_at | DateTime | Timestamp when created |
-| updated_at | DateTime | Timestamp when last updated |
-
-## Development Notes
-
-- The LINE webhook parser is currently a mock implementation for testing
-- In production, implement proper LINE signature verification
-- All text extraction uses simple keyword matching; can be upgraded with NLP
-- Consider adding authentication and rate limiting for production use
+- [API specification](docs/API_SPEC.md)
+- [System architecture](docs/SYSTEM_ARCHITECTURE.md)
+- [AI usage](docs/AI_USAGE.md)
+- [Python client sample](client_samples/python_client.py)
+- [cURL examples](client_samples/curl_examples.md)

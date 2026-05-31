@@ -1,168 +1,806 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: 【通報積木】跨社群災情轉譯 API 服務
-  description: 數位發展部「防災積木元件創新賽」參賽作品 - 核心通報積木 API 規格文件。本服務負責將社群軟體（如 LINE）中非結構化的災情多媒體訊息轉譯為標準化災情資料。
+  title: Disaster Report API
+  description: A production-ready FastAPI service for ingesting disaster reports via
+    LINE, chat, and Web APIs.
   version: 1.0.0
-servers:
-  - url: http://localhost:8000/api/v1
-    description: 本地開發與測試環境
 paths:
-  /reports:
+  /health:
+    get:
+      tags:
+      - Health
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Health Health Get
+  /report/ingest:
     post:
-      summary: 接收並儲存標準化災情通報資料
-      description: 由外部管道適配器（如 LINE Webhook Adapter）在使用者確認資料正確後呼叫，將多模態 AI 轉譯並經人類確認的結構化災情資料寫入系統。
-      security:
-        - BearerAuth: []
+      tags:
+      - Report
+      summary: Ingest
+      description: Parse incoming message, persist to DB, and return structured report.
+      operationId: ingest_report_ingest_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncomingMessage'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /line/webhook:
+    post:
+      tags:
+      - LINE
+      summary: Webhook
+      description: Handle LINE webhook events.
+      operationId: webhook_line_webhook_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LineWebhookRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineWebhookResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /chat/report:
+    post:
+      tags:
+      - Chat
+      summary: Chat Report
+      description: Create a report from natural language chat text.
+      operationId: chat_report_chat_report_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatReportRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /webhook/report:
+    post:
+      tags:
+      - Webhook
+      summary: Webhook Report
+      operationId: webhook_report_webhook_report_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookReportRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Webhook Report Webhook Report Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /sessions/{session_id}:
+    get:
+      tags:
+      - Sessions
+      summary: Get Session Detail
+      operationId: get_session_detail_sessions__session_id__get
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /sessions/{session_id}/confirm:
+    post:
+      tags:
+      - Sessions
+      summary: Confirm Session Endpoint
+      operationId: confirm_session_endpoint_sessions__session_id__confirm_post
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DisasterReport'
+              $ref: '#/components/schemas/ConfirmRequest'
       responses:
-        '201':
-          description: 災情資料接收與拋轉成功
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Disaster report successfully processed and exported."
-                  report_id:
-                    type: string
-                    example: "REQ-20250915-002"
-        '400':
-          description: 欄位驗證失敗或 JSON 格式錯誤
+                additionalProperties: true
+                title: Response Confirm Session Endpoint Sessions  Session Id  Confirm
+                  Post
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: 認證失敗，缺少或無效的 API Token
-        '500':
-          description: 伺服器內部錯誤
+                $ref: '#/components/schemas/HTTPValidationError'
+  /sessions/{session_id}/correct:
+    post:
+      tags:
+      - Sessions
+      summary: Correct Session Endpoint
+      operationId: correct_session_endpoint_sessions__session_id__correct_post
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrectRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Correct Session Endpoint Sessions  Session Id  Correct
+                  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /sessions/{session_id}/cancel:
+    post:
+      tags:
+      - Sessions
+      summary: Cancel Session Endpoint
+      operationId: cancel_session_endpoint_sessions__session_id__cancel_post
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Cancel Session Endpoint Sessions  Session Id  Cancel
+                  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /reports:
+    get:
+      tags:
+      - Reports
+      summary: Get Reports
+      description: List all reports.
+      operationId: get_reports_reports_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ReportResponse'
+                type: array
+                title: Response Get Reports Reports Get
+  /reports/{report_id}:
+    get:
+      tags:
+      - Reports
+      summary: Get Report Detail
+      description: Get a specific report.
+      operationId: get_report_detail_reports__report_id__get
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Report Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /reports/{report_id}/confirm:
+    post:
+      tags:
+      - Reports
+      summary: Confirm Report
+      description: Confirm a report.
+      operationId: confirm_report_reports__report_id__confirm_post
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Report Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /reports/{report_id}/cancel:
+    post:
+      tags:
+      - Reports
+      summary: Cancel Report
+      description: Cancel a report.
+      operationId: cancel_report_reports__report_id__cancel_post
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Report Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
   schemas:
-    DisasterReport:
+    CancelRequest:
+      properties:
+        sender_id:
+          type: string
+          title: Sender Id
+          example: U123456
       type: object
       required:
-        - report_id
-        - source_type
-        - status
-        - emergency_level
-        - timestamp
-        - location
-        - needs
+      - sender_id
+      title: CancelRequest
+    ChatReportRequest:
       properties:
-        report_id:
+        text:
           type: string
-          description: 系統內唯一的災情案件 ID
-          example: "REQ-20250915-002"
+          title: Text
+          example: 馬太鞍溪橋斷了，需要兩台怪手
+      type: object
+      required:
+      - text
+      title: ChatReportRequest
+    ConfirmRequest:
+      properties:
+        sender_id:
+          type: string
+          title: Sender Id
+          example: U123456
+        action:
+          type: string
+          title: Action
+          example: confirm
+      type: object
+      required:
+      - sender_id
+      - action
+      title: ConfirmRequest
+    Contact:
+      properties:
+        name:
+          type: string
+          title: Name
+          example: Jane Doe
+        phone:
+          type: string
+          title: Phone
+          example: 09xx-xxx-xxx
+      type: object
+      required:
+      - name
+      - phone
+      title: Contact
+    CorrectRequest:
+      properties:
+        sender_id:
+          type: string
+          title: Sender Id
+          example: U123456
+        content:
+          type: string
+          title: Content
+          example: 不是 2 台怪手，是 3 台
+      type: object
+      required:
+      - sender_id
+      - content
+      title: CorrectRequest
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    IncomingMessage:
+      properties:
+        message_id:
+          type: string
+          title: Message Id
+          example: MSG-20260524-001
         source_type:
           type: string
-          description: 通報來源類型 (official：公務人員群組指令, citizen：一般災民官方帳號)
-          enum:
-            - official
-            - citizen
-          example: "official"
-        status:
+          title: Source Type
+          example: official_group
+        raw_text:
           type: string
-          description: 案件驗證狀態 (verified_by_user：經通報者確認)
-          enum:
-            - verified_by_user
-            - pending
-            - corrected
-          example: "verified_by_user"
-        emergency_level:
-          type: string
-          description: 災情緊急程度
-          enum:
-            - 普通
-            - 高度
-            - 緊急
-          example: "緊急"
+          title: Raw Text
+          example: 馬太鞍溪橋橋斷裂，怪手已到場，缺水且有火災風險。
         timestamp:
           type: string
           format: date-time
-          description: 案件建立或確認的時間戳記 (ISO 8601 格式)
-          example: "2025-09-15T16:05:00Z"
+          title: Timestamp
+          example: '2026-05-24T14:30:00Z'
         contact:
-          type: object
-          description: 通報者聯絡資訊
-          properties:
-            name:
-              type: string
-              example: "林隊長"
-            phone:
-              type: string
-              example: "09xx-xxx-xxx"
-        location:
-          type: object
-          description: 災情地理位置資訊
-          required:
-            - gps_provided
-            - address
-          properties:
-            gps_provided:
-              type: boolean
-              description: 是否提供 GPS 定位數據
-              example: true
-            latitude:
-              type: number
-              format: float
-              example: 23.7123
-            longitude:
-              type: number
-              format: float
-              example: 121.3456
-            address:
-              type: string
-              description: 經 AI 辨識或人工補全的詳細地址資訊
-              example: "花蓮縣馬太鞍溪橋"
-        needs:
-          type: object
-          description: 現場災情狀況與資源需求
-          required:
-            - disaster_type
-          properties:
-            disaster_type:
-              type: string
-              description: 災情主要類別 (例如：橋樑斷裂、土石流、房屋倒塌)
-              example: "橋樑斷裂"
-            supplies:
-              type: array
-              description: 請求支援的具體物資清單
-              items:
-                type: object
-                properties:
-                  item:
-                    type: string
-                    example: "怪手"
-                  quantity:
-                    type: integer
-                    example: 2
-            manpower:
-              type: integer
-              description: 請求支援的人力數量 (0 表示暫時不需額外人力)
-              example: 0
-    ErrorResponse:
+          anyOf:
+          - $ref: '#/components/schemas/Contact'
+          - type: 'null'
       type: object
+      required:
+      - message_id
+      - source_type
+      - raw_text
+      - timestamp
+      title: IncomingMessage
+    LineEvent:
       properties:
-        success:
-          type: boolean
-          example: false
-        error_code:
+        type:
           type: string
-          example: "VALIDATION_ERROR"
+          title: Type
+        source:
+          $ref: '#/components/schemas/LineSource'
         message:
+          $ref: '#/components/schemas/LineMessage'
+      type: object
+      required:
+      - type
+      - source
+      - message
+      title: LineEvent
+    LineMessage:
+      properties:
+        type:
           type: string
-          example: "The field 'location.address' is required."
+          title: Type
+        text:
+          type: string
+          title: Text
+      type: object
+      required:
+      - type
+      - text
+      title: LineMessage
+    LineSource:
+      properties:
+        type:
+          type: string
+          title: Type
+        groupId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Groupid
+        userId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Userid
+      type: object
+      required:
+      - type
+      title: LineSource
+    LineWebhookRequest:
+      properties:
+        events:
+          items:
+            $ref: '#/components/schemas/LineEvent'
+          type: array
+          title: Events
+      type: object
+      required:
+      - events
+      title: LineWebhookRequest
+    LineWebhookResponse:
+      properties:
+        processed:
+          type: boolean
+          title: Processed
+        created_reports:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Created Reports
+      type: object
+      required:
+      - processed
+      - created_reports
+      title: LineWebhookResponse
+    ReplyMessage:
+      properties:
+        type:
+          type: string
+          title: Type
+          example: question
+        text:
+          type: string
+          title: Text
+          example: 請告訴我發生地點與聯絡方式。
+        actions:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Actions
+      type: object
+      required:
+      - type
+      - text
+      title: ReplyMessage
+    ReportResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        message_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message Id
+        source_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Type
+        route:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Route
+        raw_text:
+          type: string
+          title: Raw Text
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        hazard_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Hazard Type
+        requested_resource:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Requested Resource
+        quantity:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Quantity
+        critical_risk:
+          type: boolean
+          title: Critical Risk
+        confidence_score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confidence Score
+        missing_fields:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Missing Fields
+        validation_warnings:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Validation Warnings
+        state:
+          type: string
+          title: State
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - message_id
+      - source_type
+      - route
+      - raw_text
+      - location
+      - hazard_type
+      - requested_resource
+      - quantity
+      - critical_risk
+      - confidence_score
+      - missing_fields
+      - validation_warnings
+      - state
+      - created_at
+      - updated_at
+      title: ReportResponse
+    SessionResponse:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        report_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Report Id
+        platform:
+          type: string
+          title: Platform
+        sender_id:
+          type: string
+          title: Sender Id
+        group_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Group Id
+        source_type:
+          type: string
+          title: Source Type
+        source_context:
+          type: string
+          title: Source Context
+        current_state:
+          type: string
+          title: Current State
+        raw_events:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Raw Events
+        normalized_messages:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Normalized Messages
+        extracted_entities:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Extracted Entities
+        missing_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Missing Fields
+        status:
+          type: string
+          title: Status
+        reply_message:
+          anyOf:
+          - $ref: '#/components/schemas/ReplyMessage'
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        expired_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Expired At
+      type: object
+      required:
+      - session_id
+      - report_id
+      - platform
+      - sender_id
+      - group_id
+      - source_type
+      - source_context
+      - current_state
+      - status
+      - created_at
+      - updated_at
+      title: SessionResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    WebhookReportRequest:
+      properties:
+        platform:
+          type: string
+          title: Platform
+          example: LINE
+        sender_id:
+          type: string
+          title: Sender Id
+          example: U123456
+        group_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Group Id
+          example: G999
+        message_type:
+          type: string
+          title: Message Type
+          example: text
+        content:
+          type: string
+          title: Content
+          example: '@通報 馬太鞍溪橋斷裂，需要 2 台怪手'
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+          example: '2026-05-24T10:00:00Z'
+      type: object
+      required:
+      - platform
+      - sender_id
+      - message_type
+      - content
+      - timestamp
+      title: WebhookReportRequest
