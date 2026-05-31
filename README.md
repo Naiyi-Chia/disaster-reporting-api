@@ -195,6 +195,162 @@ Output 依照資料完整度分成三種主要狀態：
 - Complete reports return `status: "waiting_confirmation"` and confirmation actions.
 - Confirmed sessions return `status: "confirmed"` and a `final_report` object.
 
+### Example Request / Response JSON
+
+以下範例展示 `POST /webhook/report` 在不同資料完整度下的輸入與輸出格式。
+
+#### Request: Citizen Incomplete Report
+
+```json
+{
+  "platform": "LINE",
+  "sender_id": "citizen_demo_001",
+  "group_id": null,
+  "message_type": "text",
+  "content": "我這邊缺水，家裡淹水了",
+  "timestamp": "2026-05-31T10:05:00Z"
+}
+```
+
+#### Response: Need More Info
+
+當通報內容缺少地點、聯絡人姓名與電話時，系統會回傳 `need_more_info`，並產生中文補問訊息。
+
+```json
+{
+  "session_id": "example-session-id",
+  "report_id": null,
+  "platform": "LINE",
+  "sender_id": "citizen_demo_001",
+  "group_id": null,
+  "source_type": "citizen",
+  "source_context": "CITIZEN_DIRECT",
+  "current_state": "LOW_CONFIDENCE_REVIEW",
+  "extracted_entities": {
+    "location": {},
+    "incident": {
+      "type": "flood"
+    },
+    "needs": [
+      {
+        "item": "水",
+        "category": "supplies"
+      }
+    ],
+    "reporter": {},
+    "confidence_score": 0.29,
+    "warnings": []
+  },
+  "missing_fields": [
+    "location",
+    "reporter.name",
+    "reporter.phone"
+  ],
+  "status": "need_more_info",
+  "reply_message": {
+    "type": "question",
+    "text": "為了完成通報，請提供詳細地址或地點。請提供聯絡人姓名。請提供聯絡電話。",
+    "actions": null
+  }
+}
+```
+
+#### Request: Citizen Follow-up Message
+
+使用相同 `sender_id` 補充缺漏資訊時，系統會沿用同一個 session。
+
+```json
+{
+  "platform": "LINE",
+  "sender_id": "citizen_demo_001",
+  "group_id": null,
+  "message_type": "text",
+  "content": "地址是花蓮縣光復鄉中山路 10 號，我叫王小明，電話 0912-345-678",
+  "timestamp": "2026-05-31T10:06:00Z"
+}
+```
+
+#### Response: Waiting Confirmation
+
+資料補齊後，系統會進入等待確認狀態。
+
+```json
+{
+  "session_id": "example-session-id",
+  "report_id": null,
+  "platform": "LINE",
+  "sender_id": "citizen_demo_001",
+  "group_id": null,
+  "source_type": "citizen",
+  "source_context": "CITIZEN_DIRECT",
+  "current_state": "WAITING_CONFIRMATION",
+  "extracted_entities": {
+    "location": {
+      "address": "花蓮縣光復鄉中山路 10 號"
+    },
+    "incident": {
+      "type": "flood"
+    },
+    "needs": [
+      {
+        "item": "水",
+        "category": "supplies"
+      }
+    ],
+    "reporter": {
+      "name": "王小明",
+      "phone": "0912-345-678"
+    },
+    "confidence_score": 0.71,
+    "warnings": []
+  },
+  "missing_fields": [],
+  "status": "waiting_confirmation",
+  "reply_message": {
+    "type": "confirmation",
+    "text": "我們已收到通報，請確認以下資訊是否正確。",
+    "actions": [
+      "confirm",
+      "correct",
+      "cancel"
+    ]
+  }
+}
+```
+
+#### Request: Confirm Session
+
+使用 `POST /sessions/{session_id}/confirm` 確認 session。
+
+```json
+{
+  "sender_id": "citizen_demo_001",
+  "action": "confirm"
+}
+```
+
+#### Response: Confirmed Final Report
+
+確認後，系統會輸出可供後續 Dashboard、GIS、派工或資料交換使用的 final report。
+
+```json
+{
+  "status": "confirmed",
+  "current_state": "EXPORTED",
+  "final_report": {
+    "id": 1,
+    "source_type": "citizen",
+    "route": "B_citizen",
+    "location": "花蓮縣光復鄉中山路 10 號",
+    "hazard_type": "flood",
+    "requested_resource": "水",
+    "quantity": null,
+    "critical_risk": false,
+    "state": "confirmed"
+  }
+}
+```
+
 ## Main Workflow Example
 
 Create or update a report session:
