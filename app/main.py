@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.database import engine, Base
+from app.database import init_db
 from routers.health import router as health_router
 from routers.report import router as report_router
 from routers.line import router as line_router
@@ -19,11 +19,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup() -> None:
-    # Import ORM models so they're registered on Base.metadata before creating tables
-    import models.report  # noqa: F401
-    import models.session  # noqa: F401
-
-    Base.metadata.create_all(bind=engine)
+    init_db()
 
 
 app.include_router(health_router)
