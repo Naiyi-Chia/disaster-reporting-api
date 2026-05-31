@@ -127,12 +127,16 @@ def test_get_reports() -> None:
 
     create_response = client.post("/line/webhook", json=payload)
     assert create_response.status_code == 200
+    created_reports = create_response.json()["created_reports"]
+    assert len(created_reports) == 1
+    created_report_id = created_reports[0]["id"]
+    assert created_reports[0]["hazard_type"] == "water_shortage"
 
     list_response = client.get("/reports")
     assert list_response.status_code == 200
     reports = list_response.json()
-    assert len(reports) > 0
-    assert any(r["hazard_type"] == "water_shortage" for r in reports)
+    created_report = next(r for r in reports if r["id"] == created_report_id)
+    assert created_report["hazard_type"] == "water_shortage"
 
 
 def test_get_report_detail() -> None:

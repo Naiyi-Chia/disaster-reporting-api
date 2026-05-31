@@ -55,6 +55,9 @@ def extract_report_entities(content: str) -> dict[str, Any]:
 
     if "怪手" in normalized:
         entities["needs"].append({"item": "怪手", "category": "vehicle"})
+    if "缺水" in normalized:
+        entities["incident"]["type"] = "water_shortage"
+
     if any(keyword in normalized for keyword in ["水", "缺水"]):
         entities["needs"].append({"item": "水", "category": "supplies"})
 
@@ -117,7 +120,7 @@ def _legacy_incident_type(entities: dict[str, Any], raw_text: str) -> str | None
         "馬太鞍溪橋" in raw_text and any(keyword in raw_text for keyword in ["斷裂", "斷了"])
     ):
         return "bridge_collapse"
-    if incident_type in {"flood", "fire"}:
+    if incident_type in {"flood", "fire", "water_shortage"}:
         return incident_type
     if "蝻箸偌" in raw_text:
         return "water_shortage"
