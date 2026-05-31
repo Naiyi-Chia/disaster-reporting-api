@@ -60,21 +60,27 @@
 
 LINE production integration 不在目前 MVP 範圍內。既有 `/line/webhook` 屬於 legacy/testing route；競賽展示的主要 workflow 使用 `/webhook/report`。
 
+
 ```mermaid
 flowchart TD
-    A[User / LINE-like Client / Web Client] --> B[POST /webhook/report]
-    B --> C[Session Service]
-    C --> D[Extraction Service]
-    D --> E[Missing fields check]
-    E -->|missing fields| F[Need more info]
-    E -->|complete enough| G[Waiting confirmation]
+    A["User / LINE-like Client / Web Client"] --> B["Webhook Report API"]
+    B --> C["Session Service"]
+    C --> D["Extraction Service"]
+    D --> E{"Missing fields?"}
+    E -->|Yes| F["Need More Info"]
+    E -->|No| G["Waiting Confirmation"]
     F --> B
-    G --> H[POST /sessions/{session_id}/confirm]
-    H --> I[Final Report]
-    I --> J[(SQLite)]
-    J --> K[GET /reports]
-    K --> L[Dashboard / GIS / Dispatch System]
+    G --> H["Confirm Session API"]
+    H --> I["Final Report"]
+    I --> J[("SQLite Database")]
+    J --> K["Reports API"]
+    K --> L["Dashboard / GIS / Dispatch System"]
 ```
+Endpoint mapping:
+
+- Webhook Report API: `POST /webhook/report`
+- Confirm Session API: `POST /sessions/{session_id}/confirm`
+- Reports API: `GET /reports`
 
 ## Quick Start
 
