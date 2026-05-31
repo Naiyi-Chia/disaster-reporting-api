@@ -207,7 +207,7 @@ curl -X POST "http://127.0.0.1:8000/webhook/report" \
     "sender_id": "official_demo_001",
     "group_id": "official_group_001",
     "message_type": "text",
-    "content": "@? 擐砍云?漯璈鋆??閬?2 ?唳芣?",
+    "content": "@通報 馬太鞍溪橋斷裂，需要 2 台怪手",
     "timestamp": "2026-05-31T10:00:00Z"
   }'
 ```
@@ -339,18 +339,18 @@ python -m pytest tests/test_workflow_e2e.py
 
 以下限制是目前 MVP 的實際狀態，尚未實作的項目不在此版本中宣稱已完成：
 
-- This MVP is not production-ready.
-- Real LINE production integration is not complete.
-- LINE signature verification is not implemented for production use.
-- Authentication and authorization are not implemented.
-- Rate limiting and spam filtering are not implemented.
-- Timeout handling, auto-cancel behavior, and fallback loop prevention are not implemented.
-- The extraction architecture is rule-based, not an LLM or trained NLP model.
-- Current parser examples include encoded demo strings from the MVP test data.
-- Only text messages are supported by `POST /webhook/report`.
-- SQLite is used for MVP storage.
-- The checked-in `openapi.yaml` is a static submission artifact; the live FastAPI spec at `/openapi.json` is the source to regenerate from.
-- Human confirmation is required before final report export.
+- 本 MVP 尚未達到 production-ready 狀態。
+- 尚未完成真實 LINE production integration。
+- 尚未實作 production use 所需的 LINE signature verification。
+- 尚未實作 authentication 與 authorization。
+- 尚未實作 rate limiting 與 spam filtering。
+- 尚未實作 timeout handling、auto-cancel behavior 與 fallback loop prevention。
+- 目前 extraction architecture 為 rule-based parser，尚非 LLM 或 trained NLP model。
+- 部分測試資料來自 MVP 開發過程中的範例案例，正式上線前需擴充更多真實語料測試。
+- `POST /webhook/report` 目前僅支援 text messages。
+- 目前使用 SQLite 作為 MVP storage。
+- Repo 中的 `openapi.yaml` 是 static submission artifact；若 API route 後續變更，應以 live FastAPI spec `/openapi.json` 重新產生。
+- Final report export 前仍需要 human confirmation。
 
 ## Roadmap
 
